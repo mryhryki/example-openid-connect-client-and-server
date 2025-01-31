@@ -1,0 +1,8 @@
+{
+  "name": "server",
+  "author": "mryhryki",
+  "license": "MIT",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
