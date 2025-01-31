@@ -1,0 +1,24 @@
+{
+  "name": "example-openid-connect-client-and-server",
+  "author": "mryhryki",
+  "private": true,
+  "type": "module",
+  "volta": {
+    "node": "23.6.1",
+    "npm": "11.0.0"
+  },
+  "workspaces": ["client", "server"],
+  "scripts": {
+    "check": "npm run lint && npm run type && npm run test && echo '### Check: OK ###'",
+    "fmt": "biome check --write",
+    "lint": "biome check",
+    "test": "npm --workspaces run test",
+    "type": "tsc",
+    "type:watch": "tsc --watch"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "typescript": "5.7.3",
+    "vitest": "3.0.4"
+  }
+}
