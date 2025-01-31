@@ -1,8 +1,16 @@
 {
   "name": "client",
-  "author": "mryhryki",
   "license": "MIT",
+  "author": "mryhryki",
+  "private": true,
+  "type": "module",
+  "volta": {
+    "node": "23.6.1",
+    "npm": "11.0.0"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node ./src/index.ts",
+    "test": "vitest run --dir ./src/ --disable-console-intercept",
+    "test:watch": "vitest watch --dir ./src/ --disable-console-intercept"
   }
 }
