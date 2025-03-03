@@ -34,6 +34,7 @@
 
 - GitHub Actions で `.github/workflows/check.yaml` で自動的にチェックされます。
 
-## 開発方針
+## AI利用方針
 
 このリポジトリは、基本的に AI (Cline, Cursor) を使って実装する方針です。
+ただし、AIが生成したコードで、修正が難しい場合は手動で修正する場合もあります。
