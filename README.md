@@ -6,11 +6,13 @@
 
 ## 開発環境
 
+- [TypeScript](https://www.typescriptlang.org/)
 - [Node.js](https://nodejs.org/) with [Volta](https://volta.sh/)
     - [npm](https://www.npmjs.com/): Package Manager
 - [Biome](https://biomejs.dev/):Linter and Formatter
 - [Vitest](https://vitejs.dev/guide/): Test Runner
 - [tsc](https://www.typescriptlang.org/): Type Checker (Not transpiler)
+- [GitHub](https://github.com/): Version Control
 
 ### クライアント (./client/)
  
@@ -31,3 +33,7 @@
 ## CI
 
 - GitHub Actions で `.github/workflows/check.yaml` で自動的にチェックされます。
+
+## 開発方針
+
+このリポジトリは、基本的に AI (Cline, Cursor) を使って実装する方針です。
