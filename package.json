@@ -7,10 +7,7 @@
     "node": "23.6.1",
     "npm": "11.0.0"
   },
-  "workspaces": [
-    "client",
-    "server"
-  ],
+  "workspaces": ["client", "server"],
   "scripts": {
     "check": "npm run lint && npm run type && npm run test && echo '### Check: OK ###'",
     "fmt": "biome check --write",
