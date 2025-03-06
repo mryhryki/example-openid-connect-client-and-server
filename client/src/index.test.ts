@@ -1,5 +1,9 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import OpenIDConnectRP, { OpenIDConfiguration, TokenResponse, UserInfo } from "./index";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import OpenIDConnectRP, {
+  type OpenIDConfiguration,
+  type TokenResponse,
+  type UserInfo,
+} from "./index";
 
 // モックの設定
 const mockFetch = vi.fn();
@@ -26,7 +30,7 @@ describe("OpenIDConnectRP", () => {
   };
 
   // テスト用のIDトークン
-  const createIdToken = (payload: any) => {
+  const createIdToken = (payload: Record<string, unknown>) => {
     const header = { alg: "HS256", typ: "JWT" };
     const encodedHeader = global.btoa(JSON.stringify(header));
     const encodedPayload = global.btoa(JSON.stringify(payload));
@@ -45,16 +49,24 @@ describe("OpenIDConnectRP", () => {
   describe("constructor", () => {
     it("必須パラメータがない場合はエラーをスローする", () => {
       // clientIdがない場合
-      expect(() => new OpenIDConnectRP({ ...config, clientId: "" })).toThrow("clientId is required");
-      
+      expect(() => new OpenIDConnectRP({ ...config, clientId: "" })).toThrow(
+        "clientId is required",
+      );
+
       // redirectUriがない場合
-      expect(() => new OpenIDConnectRP({ ...config, redirectUri: "" })).toThrow("redirectUri is required");
-      
+      expect(() => new OpenIDConnectRP({ ...config, redirectUri: "" })).toThrow(
+        "redirectUri is required",
+      );
+
       // authorizationEndpointがない場合
-      expect(() => new OpenIDConnectRP({ ...config, authorizationEndpoint: "" })).toThrow("authorizationEndpoint is required");
-      
+      expect(
+        () => new OpenIDConnectRP({ ...config, authorizationEndpoint: "" }),
+      ).toThrow("authorizationEndpoint is required");
+
       // tokenEndpointがない場合
-      expect(() => new OpenIDConnectRP({ ...config, tokenEndpoint: "" })).toThrow("tokenEndpoint is required");
+      expect(
+        () => new OpenIDConnectRP({ ...config, tokenEndpoint: "" }),
+      ).toThrow("tokenEndpoint is required");
     });
 
     it("デフォルト値が正しく設定される", () => {
@@ -65,12 +77,12 @@ describe("OpenIDConnectRP", () => {
         authorizationEndpoint: "https://auth.example.com/authorize",
         tokenEndpoint: "https://auth.example.com/token",
       };
-      
+
       const rp = new OpenIDConnectRP(minimalConfig);
-      
-      // privateプロパティにアクセスするためにanyにキャスト
-      const rpAny = rp as any;
-      
+
+      // privateプロパティにアクセスするためにキャスト
+      const rpAny = rp as unknown as { config: OpenIDConfiguration };
+
       expect(rpAny.config.responseType).toBe("code");
       expect(rpAny.config.scope).toBe("openid profile email");
     });
@@ -80,11 +92,13 @@ describe("OpenIDConnectRP", () => {
     it("正しい認証リクエストURLを生成する", () => {
       const rp = new OpenIDConnectRP(config);
       const url = rp.generateAuthorizationUrl();
-      
+
       // URLをパースして検証
       const parsedUrl = new URL(url);
-      expect(parsedUrl.origin + parsedUrl.pathname).toBe(config.authorizationEndpoint);
-      
+      expect(parsedUrl.origin + parsedUrl.pathname).toBe(
+        config.authorizationEndpoint,
+      );
+
       // クエリパラメータを検証
       const params = new URLSearchParams(parsedUrl.search);
       expect(params.get("client_id")).toBe(config.clientId);
@@ -107,21 +121,27 @@ describe("OpenIDConnectRP", () => {
         loginHint: "user@example.com",
         acrValues: "1",
       };
-      
+
       const rp = new OpenIDConnectRP(configWithOptionalParams);
       const url = rp.generateAuthorizationUrl();
-      
+
       // URLをパースして検証
       const parsedUrl = new URL(url);
       const params = new URLSearchParams(parsedUrl.search);
-      
+
       // 任意パラメータを検証
-      expect(params.get("response_mode")).toBe(configWithOptionalParams.responseMode);
+      expect(params.get("response_mode")).toBe(
+        configWithOptionalParams.responseMode,
+      );
       expect(params.get("display")).toBe(configWithOptionalParams.display);
       expect(params.get("prompt")).toBe(configWithOptionalParams.prompt);
-      expect(params.get("max_age")).toBe(configWithOptionalParams.maxAge?.toString());
+      expect(params.get("max_age")).toBe(
+        configWithOptionalParams.maxAge?.toString(),
+      );
       expect(params.get("ui_locales")).toBe(configWithOptionalParams.uiLocales);
-      expect(params.get("id_token_hint")).toBe(configWithOptionalParams.idTokenHint);
+      expect(params.get("id_token_hint")).toBe(
+        configWithOptionalParams.idTokenHint,
+      );
       expect(params.get("login_hint")).toBe(configWithOptionalParams.loginHint);
       expect(params.get("acr_values")).toBe(configWithOptionalParams.acrValues);
     });
@@ -136,16 +156,16 @@ describe("OpenIDConnectRP", () => {
         expires_in: 3600,
         id_token: "test-id-token",
       };
-      
+
       // fetchのモック
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => tokenResponse,
       });
-      
+
       const rp = new OpenIDConnectRP(config);
       const result = await rp.getToken("test-code");
-      
+
       // fetchが正しく呼び出されたか検証
       expect(mockFetch).toHaveBeenCalledTimes(1);
       expect(mockFetch).toHaveBeenCalledWith(config.tokenEndpoint, {
@@ -155,7 +175,7 @@ describe("OpenIDConnectRP", () => {
         },
         body: expect.any(String),
       });
-      
+
       // リクエストボディを検証
       const callArgs = mockFetch.mock.calls[0];
       const requestBody = new URLSearchParams(callArgs[1].body);
@@ -164,7 +184,7 @@ describe("OpenIDConnectRP", () => {
       expect(requestBody.get("redirect_uri")).toBe(config.redirectUri);
       expect(requestBody.get("client_id")).toBe(config.clientId);
       expect(requestBody.get("client_secret")).toBe(config.clientSecret);
-      
+
       // 結果を検証
       expect(result).toEqual(tokenResponse);
     });
@@ -175,11 +195,13 @@ describe("OpenIDConnectRP", () => {
         ok: false,
         statusText: "Unauthorized",
       });
-      
+
       const rp = new OpenIDConnectRP(config);
-      
+
       // エラーがスローされることを検証
-      await expect(rp.getToken("test-code")).rejects.toThrow("Token request failed: Unauthorized");
+      await expect(rp.getToken("test-code")).rejects.toThrow(
+        "Token request failed: Unauthorized",
+      );
     });
   });
 
@@ -194,12 +216,12 @@ describe("OpenIDConnectRP", () => {
         iat: now,
         nonce: "test-nonce",
       };
-      
+
       const idToken = createIdToken(payload);
-      
+
       const rp = new OpenIDConnectRP(config);
       const isValid = rp.validateIdToken(idToken);
-      
+
       expect(isValid).toBe(true);
     });
 
@@ -213,12 +235,12 @@ describe("OpenIDConnectRP", () => {
         iat: now - 7200,
         nonce: "test-nonce",
       };
-      
+
       const idToken = createIdToken(payload);
-      
+
       const rp = new OpenIDConnectRP(config);
       const isValid = rp.validateIdToken(idToken);
-      
+
       expect(isValid).toBe(false);
     });
 
@@ -232,12 +254,12 @@ describe("OpenIDConnectRP", () => {
         iat: now,
         nonce: "test-nonce",
       };
-      
+
       const idToken = createIdToken(payload);
-      
+
       const rp = new OpenIDConnectRP(config);
       const isValid = rp.validateIdToken(idToken);
-      
+
       expect(isValid).toBe(false);
     });
 
@@ -251,12 +273,12 @@ describe("OpenIDConnectRP", () => {
         iat: now,
         nonce: "wrong-nonce", // 不正なnonce
       };
-      
+
       const idToken = createIdToken(payload);
-      
+
       const rp = new OpenIDConnectRP(config);
       const isValid = rp.validateIdToken(idToken);
-      
+
       expect(isValid).toBe(false);
     });
   });
@@ -269,16 +291,16 @@ describe("OpenIDConnectRP", () => {
         email: "user@example.com",
         email_verified: true,
       };
-      
+
       // fetchのモック
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => userInfo,
       });
-      
+
       const rp = new OpenIDConnectRP(config);
       const result = await rp.getUserInfo("test-access-token");
-      
+
       // fetchが正しく呼び出されたか検証
       expect(mockFetch).toHaveBeenCalledTimes(1);
       expect(mockFetch).toHaveBeenCalledWith(config.userinfoEndpoint, {
@@ -286,19 +308,21 @@ describe("OpenIDConnectRP", () => {
           Authorization: "Bearer test-access-token",
         },
       });
-      
+
       // 結果を検証
       expect(result).toEqual(userInfo);
     });
 
     it("userinfoEndpointが設定されていない場合はエラーをスローする", async () => {
       const configWithoutUserinfoEndpoint = { ...config };
-      delete configWithoutUserinfoEndpoint.userinfoEndpoint;
-      
+      configWithoutUserinfoEndpoint.userinfoEndpoint = undefined;
+
       const rp = new OpenIDConnectRP(configWithoutUserinfoEndpoint);
-      
+
       // エラーがスローされることを検証
-      await expect(rp.getUserInfo("test-access-token")).rejects.toThrow("userinfoEndpoint is not configured");
+      await expect(rp.getUserInfo("test-access-token")).rejects.toThrow(
+        "userinfoEndpoint is not configured",
+      );
     });
 
     it("ユーザー情報リクエストが失敗した場合はエラーをスローする", async () => {
@@ -307,11 +331,13 @@ describe("OpenIDConnectRP", () => {
         ok: false,
         statusText: "Unauthorized",
       });
-      
+
       const rp = new OpenIDConnectRP(config);
-      
+
       // エラーがスローされることを検証
-      await expect(rp.getUserInfo("test-access-token")).rejects.toThrow("UserInfo request failed: Unauthorized");
+      await expect(rp.getUserInfo("test-access-token")).rejects.toThrow(
+        "UserInfo request failed: Unauthorized",
+      );
     });
   });
 
@@ -324,26 +350,27 @@ describe("OpenIDConnectRP", () => {
         expires_in: 3600,
         id_token: "test-id-token",
       };
-      
+
       // fetchのモック
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => tokenResponse,
       });
-      
+
       const rp = new OpenIDConnectRP(config);
       const callbackUrl = `https://example.com/callback?code=test-code&state=${config.state}`;
       const result = await rp.handleCallback(callbackUrl);
-      
+
       // 結果を検証
       expect(result).toEqual({ tokenResponse });
     });
 
     it("エラーを含むコールバックを処理する", async () => {
       const rp = new OpenIDConnectRP(config);
-      const callbackUrl = "https://example.com/callback?error=access_denied&error_description=User+denied+access";
+      const callbackUrl =
+        "https://example.com/callback?error=access_denied&error_description=User+denied+access";
       const result = await rp.handleCallback(callbackUrl);
-      
+
       // 結果を検証
       expect(result).toEqual({
         error: "access_denied",
@@ -353,9 +380,10 @@ describe("OpenIDConnectRP", () => {
 
     it("不正なstateを含むコールバックを処理する", async () => {
       const rp = new OpenIDConnectRP(config);
-      const callbackUrl = "https://example.com/callback?code=test-code&state=wrong-state";
+      const callbackUrl =
+        "https://example.com/callback?code=test-code&state=wrong-state";
       const result = await rp.handleCallback(callbackUrl);
-      
+
       // 結果を検証
       expect(result).toEqual({
         error: "invalid_state",
@@ -367,7 +395,7 @@ describe("OpenIDConnectRP", () => {
       const rp = new OpenIDConnectRP(config);
       const callbackUrl = `https://example.com/callback?state=${config.state}`;
       const result = await rp.handleCallback(callbackUrl);
-      
+
       // 結果を検証
       expect(result).toEqual({
         error: "invalid_response",
@@ -385,16 +413,16 @@ describe("OpenIDConnectRP", () => {
         expires_in: 3600,
         id_token: "new-id-token",
       };
-      
+
       // fetchのモック
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => tokenResponse,
       });
-      
+
       const rp = new OpenIDConnectRP(config);
       const result = await rp.refreshToken("test-refresh-token");
-      
+
       // fetchが正しく呼び出されたか検証
       expect(mockFetch).toHaveBeenCalledTimes(1);
       expect(mockFetch).toHaveBeenCalledWith(config.tokenEndpoint, {
@@ -404,7 +432,7 @@ describe("OpenIDConnectRP", () => {
         },
         body: expect.any(String),
       });
-      
+
       // リクエストボディを検証
       const callArgs = mockFetch.mock.calls[0];
       const requestBody = new URLSearchParams(callArgs[1].body);
@@ -412,7 +440,7 @@ describe("OpenIDConnectRP", () => {
       expect(requestBody.get("refresh_token")).toBe("test-refresh-token");
       expect(requestBody.get("client_id")).toBe(config.clientId);
       expect(requestBody.get("client_secret")).toBe(config.clientSecret);
-      
+
       // 結果を検証
       expect(result).toEqual(tokenResponse);
     });
@@ -423,11 +451,13 @@ describe("OpenIDConnectRP", () => {
         ok: false,
         statusText: "Unauthorized",
       });
-      
+
       const rp = new OpenIDConnectRP(config);
-      
+
       // エラーがスローされることを検証
-      await expect(rp.refreshToken("test-refresh-token")).rejects.toThrow("Token refresh failed: Unauthorized");
+      await expect(rp.refreshToken("test-refresh-token")).rejects.toThrow(
+        "Token refresh failed: Unauthorized",
+      );
     });
   });
 });
