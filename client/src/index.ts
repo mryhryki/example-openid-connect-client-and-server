@@ -7,17 +7,17 @@ export interface OpenIDConfiguration {
   // 必須パラメータ
   clientId: string;
   redirectUri: string;
-  
+
   // 任意パラメータ（デフォルト値あり）
   responseType?: string;
   scope?: string;
-  
+
   // OpenID Provider (OP) のエンドポイント
   authorizationEndpoint: string;
   tokenEndpoint: string;
   userinfoEndpoint?: string;
   jwksUri?: string;
-  
+
   // その他の設定
   clientSecret?: string;
   responseMode?: string;
@@ -69,7 +69,7 @@ export interface UserInfo {
     country?: string;
   };
   updated_at?: number;
-  [key: string]: any; // その他のカスタムクレーム
+  [key: string]: unknown; // その他のカスタムクレーム
 }
 
 export interface IDTokenPayload {
@@ -85,7 +85,7 @@ export interface IDTokenPayload {
   azp?: string;
   at_hash?: string;
   c_hash?: string;
-  [key: string]: any; // その他のカスタムクレーム
+  [key: string]: unknown; // その他のカスタムクレーム
 }
 
 /**
@@ -135,8 +135,8 @@ export class OpenIDConnectRP {
     const params = new URLSearchParams({
       client_id: this.config.clientId,
       redirect_uri: this.config.redirectUri,
-      response_type: this.config.responseType!,
-      scope: this.config.scope!,
+      response_type: this.config.responseType || "code",
+      scope: this.config.scope || "openid profile email",
       state: this.state,
       nonce: this.nonce,
     });
@@ -199,7 +199,7 @@ export class OpenIDConnectRP {
       throw new Error(`Token request failed: ${response.statusText}`);
     }
 
-    return await response.json() as TokenResponse;
+    return (await response.json()) as TokenResponse;
   }
 
   /**
@@ -211,14 +211,14 @@ export class OpenIDConnectRP {
     try {
       // 注: 実際の実装では、JWTの署名検証やクレームの検証が必要です
       // このサンプル実装では、簡易的な検証のみを行います
-      
+
       const parts = idToken.split(".");
       if (parts.length !== 3) {
         return false;
       }
 
       const payload = JSON.parse(atob(parts[1])) as IDTokenPayload;
-      
+
       // 有効期限の検証
       const now = Math.floor(Date.now() / 1000);
       if (payload.exp <= now) {
@@ -232,8 +232,11 @@ export class OpenIDConnectRP {
       }
 
       // 対象者の検証
-      if (payload.aud !== this.config.clientId && 
-          (!Array.isArray(payload.aud) || !payload.aud.includes(this.config.clientId))) {
+      if (
+        payload.aud !== this.config.clientId &&
+        (!Array.isArray(payload.aud) ||
+          !payload.aud.includes(this.config.clientId))
+      ) {
         return false;
       }
 
@@ -269,7 +272,7 @@ export class OpenIDConnectRP {
       throw new Error(`UserInfo request failed: ${response.statusText}`);
     }
 
-    return await response.json() as UserInfo;
+    return (await response.json()) as UserInfo;
   }
 
   /**
@@ -284,7 +287,7 @@ export class OpenIDConnectRP {
   }> {
     const urlObj = new URL(url);
     const params = new URLSearchParams(urlObj.search);
-    
+
     // エラーチェック
     const error = params.get("error");
     if (error) {
@@ -319,7 +322,8 @@ export class OpenIDConnectRP {
     } catch (error) {
       return {
         error: "token_error",
-        errorDescription: error instanceof Error ? error.message : String(error),
+        errorDescription:
+          error instanceof Error ? error.message : String(error),
       };
     }
   }
@@ -330,10 +334,11 @@ export class OpenIDConnectRP {
    * @returns ランダムな文字列
    */
   private generateRandomString(length = 32): string {
-    const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    const charset =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     let result = "";
     const randomValues = new Uint8Array(length);
-    
+
     // ブラウザ環境とNode.js環境の両方に対応
     if (typeof window !== "undefined" && window.crypto) {
       window.crypto.getRandomValues(randomValues);
@@ -346,11 +351,11 @@ export class OpenIDConnectRP {
         randomValues[i] = Math.floor(Math.random() * charset.length);
       }
     }
-    
+
     for (let i = 0; i < length; i++) {
       result += charset[randomValues[i] % charset.length];
     }
-    
+
     return result;
   }
 
@@ -382,7 +387,7 @@ export class OpenIDConnectRP {
       throw new Error(`Token refresh failed: ${response.statusText}`);
     }
 
-    return await response.json() as TokenResponse;
+    return (await response.json()) as TokenResponse;
   }
 }
 
