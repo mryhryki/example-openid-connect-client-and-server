@@ -27,11 +27,16 @@ async function exampleUsage() {
 
     // 3. コールバック処理（認証後にリダイレクトされたときの処理）
     // 注: 実際のアプリケーションでは、コールバックURLはリダイレクト後に取得します
-    const callbackUrl = "https://your-app.example.com/callback?code=example-code&state=example-state";
+    const callbackUrl =
+      "https://your-app.example.com/callback?code=example-code&state=example-state";
     const callbackResult = await rp.handleCallback(callbackUrl);
 
     if (callbackResult.error) {
-      console.error("認証エラー:", callbackResult.error, callbackResult.errorDescription);
+      console.error(
+        "認証エラー:",
+        callbackResult.error,
+        callbackResult.errorDescription,
+      );
       return;
     }
 
@@ -42,7 +47,7 @@ async function exampleUsage() {
 
     // 4. トークンの取得と検証
     const { access_token, id_token } = callbackResult.tokenResponse;
-    
+
     if (id_token) {
       const isValid = rp.validateIdToken(id_token);
       console.log("IDトークンの検証結果:", isValid);
@@ -56,7 +61,9 @@ async function exampleUsage() {
 
     // 6. リフレッシュトークンの使用（存在する場合）
     if (callbackResult.tokenResponse.refresh_token) {
-      const refreshedTokens = await rp.refreshToken(callbackResult.tokenResponse.refresh_token);
+      const refreshedTokens = await rp.refreshToken(
+        callbackResult.tokenResponse.refresh_token,
+      );
       console.log("リフレッシュされたトークン:", refreshedTokens);
     }
   } catch (error) {
@@ -66,7 +73,7 @@ async function exampleUsage() {
 
 /**
  * Expressアプリケーションでの使用例
- * 
+ *
  * 注: この例は実際には実行されません。Expressアプリケーションでの使用方法を示すためのものです。
  */
 function expressExample() {
